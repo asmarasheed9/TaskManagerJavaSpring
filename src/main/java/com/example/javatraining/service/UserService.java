@@ -7,4 +7,5 @@ public interface UserService {
     User registerUser(User user);
     String loginUser(AuthRequest authRequest);
     User findUserByEmail(String email);
+    User findUserById(Long Id);
 }
