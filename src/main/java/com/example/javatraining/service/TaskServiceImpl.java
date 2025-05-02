@@ -41,7 +41,6 @@ public class TaskServiceImpl implements TaskService {
         log.info("Task: " + task.toString());
         Task savedTask = taskRepository.save(task);
         log.info("Saved Task: " + savedTask.toString());
-        //unit eend
         return savedTask;
     }
 
