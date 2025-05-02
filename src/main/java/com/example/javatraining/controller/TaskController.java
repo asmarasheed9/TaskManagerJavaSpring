@@ -5,6 +5,7 @@ import com.example.javatraining.model.Task;
 import com.example.javatraining.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,6 +37,10 @@ public class TaskController {
         return ResponseEntity.ok(response);
     }
 
+    //never add business logic in the controller layer
+    //controller has only one single responsibility:
+    //1. request routing to the service class 
+    //Never return raw response, return DTO
     @GetMapping
     public ResponseEntity<List<Map<String, Object>>> getAllTasks() {
         List<Map<String, Object>> listOfTasks = new ArrayList<>();
@@ -51,6 +56,7 @@ public class TaskController {
         return ResponseEntity.ok(listOfTasks);
     }
 
+    //use uuid (not id)
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getTaskById(@PathVariable Long id) {
 

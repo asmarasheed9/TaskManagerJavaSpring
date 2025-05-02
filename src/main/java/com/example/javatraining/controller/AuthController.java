@@ -29,7 +29,7 @@ public class AuthController {
         this.userService = userService;
         this.roleService = roleService;
     }
-
+    
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @RequestBody UserDto userDto) {
         System.out.println("User: " + userDto);
@@ -45,6 +45,7 @@ public class AuthController {
         return ResponseEntity.ok(userService.registerUser(user));
     }
 
+    //it should return a token
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest authRequest) {
         log.info("AuthRequest: " + authRequest);

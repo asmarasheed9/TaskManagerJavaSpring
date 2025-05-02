@@ -1,3 +1,5 @@
+#tie this with a spring boot application to spin it up
+
 version: "3"
 services:
   mysql:

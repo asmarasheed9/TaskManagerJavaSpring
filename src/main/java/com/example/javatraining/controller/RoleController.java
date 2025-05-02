@@ -15,6 +15,8 @@ public class RoleController {
         this.roleService = roleService;
     }
 
+    //use DTO to get/return the data instead of entity.
+    
     @PostMapping
     public ResponseEntity<Role> createRole(@RequestBody Role role) {
         Role savedRole = roleService.saveRole(role);
