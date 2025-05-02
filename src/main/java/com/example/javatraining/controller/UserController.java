@@ -32,6 +32,7 @@ public class UserController {
 
         List<Map<String, Object>> listOfTasks = new ArrayList<>();
 
+        //Use enum, instead of strings for constants
         if (user.getRole().getName().equals("ADMIN")) {
             taskService.getTasksByUserId(userId).forEach(task -> {
                 Map<String, Object> response = new HashMap<>();

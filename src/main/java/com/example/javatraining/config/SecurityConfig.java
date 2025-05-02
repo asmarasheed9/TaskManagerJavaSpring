@@ -31,6 +31,7 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF for APIs
                 .authorizeHttpRequests(auth -> auth
+                        //make them secure
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/roles/**").permitAll()
                         .requestMatchers("/api/users/**").permitAll()  // 🔥 Allow creating roles without auth

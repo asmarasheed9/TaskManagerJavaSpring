@@ -5,20 +5,27 @@ import com.example.javatraining.model.Task;
 import com.example.javatraining.model.User;
 import com.example.javatraining.repository.TaskRepository;
 import com.example.javatraining.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Slf4j
-@Service
-@Transactional
+@Component
+@Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
 public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
 
+    //4. 
+    //5.
+    
+    
     public TaskServiceImpl(TaskRepository taskRepository, UserRepository userRepository) {
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
@@ -26,18 +33,23 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public Task createTask(TaskDto taskDto) {
+        //delegate this validation to database foreign key
         User user = userRepository.findById(taskDto.getAssignedUserId())
                 .orElseThrow(() -> new RuntimeException("User not found With Given Id"));
 
+        //user mapper for conversion
         Task task = new Task();
         task.setTitle(taskDto.getTitle());
         task.setDescription(taskDto.getDescription());
         task.setDueDate(taskDto.getDueDate());
         task.setAssignedUser(user);
 
+        //do not use concatenation in loggers
+        //you may use object placeholders 
         log.info("Task: " + task.toString());
         Task savedTask = taskRepository.save(task);
         log.info("Saved Task: " + savedTask.toString());
+        //unit eend
         return savedTask;
     }
 
