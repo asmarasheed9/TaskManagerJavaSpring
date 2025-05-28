@@ -4,6 +4,7 @@ import com.example.javatraining.model.Role;
 import com.example.javatraining.repository.RoleRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -27,6 +28,6 @@ public class RoleService {
         return roleRepository.findById(Id);
     }
 
-
+    public List<Role> getAllRoles() { return this.roleRepository.findAll();}
 
 }

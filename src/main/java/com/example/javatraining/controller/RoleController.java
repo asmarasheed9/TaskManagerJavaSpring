@@ -5,6 +5,8 @@ import com.example.javatraining.service.RoleService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/roles")
 public class RoleController {
@@ -26,5 +28,9 @@ public class RoleController {
         return roleService.findRoleByName(name)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+    @GetMapping
+    public ResponseEntity<List<Role>> getAllRoles() {
+        return ResponseEntity.ok(roleService.getAllRoles());
     }
 }

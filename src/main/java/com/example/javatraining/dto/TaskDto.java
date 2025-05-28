@@ -1,10 +1,7 @@
 package com.example.javatraining.dto;
 
-import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-
-import java.time.LocalDateTime;
 
 public class TaskDto {
 
@@ -15,13 +12,10 @@ public class TaskDto {
 
     private String status;
 
-    private LocalDateTime dueDate;
-
     @NotNull(message = "Assigned user is required")
     private Long assignedUserId;
 
-    private LocalDateTime updatedAt;
-    private LocalDateTime createdAt;
+    private String uuid;
 
     public String getTitle() {
         return title;
@@ -35,16 +29,15 @@ public class TaskDto {
         return status;
     }
 
-    public LocalDateTime getDueDate() {
-        return dueDate;
-    }
-
     public Long getAssignedUserId() {
         return assignedUserId;
     }
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
+    public String getUuid() {
+        return uuid;
     }
 
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
 }

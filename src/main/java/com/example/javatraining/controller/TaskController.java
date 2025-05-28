@@ -1,17 +1,18 @@
 package com.example.javatraining.controller;
 
+import com.example.javatraining.dto.ApiResponse;
 import com.example.javatraining.dto.TaskDto;
 import com.example.javatraining.model.Task;
+import com.example.javatraining.model.User;
 import com.example.javatraining.service.TaskService;
-import jakarta.validation.Valid;
+import com.example.javatraining.service.UserService;
+import com.example.javatraining.service.mapper.TaskMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -24,76 +25,47 @@ public class TaskController {
         this.taskService = taskService;
     }
 
-    @PostMapping
-    public ResponseEntity<Map<String, Object>> createTask(@Valid @RequestBody TaskDto taskDto) {
-        Task createdTask = taskService.createTask(taskDto);
-        Map<String, Object> response = new HashMap<>();
-        response.put("id", createdTask.getId());
-        response.put("title", createdTask.getTitle());
-        response.put("description", createdTask.getDescription());
-        response.put("dueDate", createdTask.getDueDate());
-
-        return ResponseEntity.ok(response);
+    public User getUserFromAuthentication(Authentication auth) {
+        return (User) auth.getPrincipal();
     }
 
     @GetMapping
-    public ResponseEntity<List<Map<String, Object>>> getAllTasks() {
-        List<Map<String, Object>> listOfTasks = new ArrayList<>();
-
-        taskService.findAllTasks().forEach(task -> {
-            Map<String, Object> response = new HashMap<>();
-            response.put("id", task.getId());
-            response.put("title", task.getTitle());
-            response.put("description", task.getDescription());
-            response.put("dueDate", task.getDueDate());
-            listOfTasks.add(response);
-        });
-        return ResponseEntity.ok(listOfTasks);
+    public ApiResponse<List<TaskDto>> getAllTasks(Authentication authentication,
+                                                  @RequestParam(defaultValue = "0") int page,
+                                                  @RequestParam(defaultValue = "id") String sortBy) {
+        User currentUser = this.getUserFromAuthentication(authentication);
+        return new ApiResponse(true, "List of Tasks", taskService.getTasksForCurrentUser(currentUser, page, sortBy)
+                .stream()
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> getTaskById(@PathVariable Long id) {
-
-        Task createdTask = taskService.getTasksByUserId(id).get(0);
-        Map<String, Object> response = new HashMap<>();
-        response.put("id", createdTask.getId());
-        response.put("title", createdTask.getTitle());
-        response.put("description", createdTask.getDescription());
-        response.put("dueDate", createdTask.getDueDate());
-
-        return ResponseEntity.ok(response);
+    public ResponseEntity<ApiResponse<Task>> getTask(@PathVariable Long taskId, Authentication authentication) {
+        User currentUser = this.getUserFromAuthentication(authentication);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Task retrieved ", taskService.getTaskForCurrentUser(taskId, currentUser)));
     }
 
-    @GetMapping("/user/{id}/tasks")
-    public ResponseEntity<List<Map<String, Object>>> getTasksByUserId(@PathVariable Long id) {
-        List<Map<String, Object>> listOfTasks = new ArrayList<>();
-
-        taskService.getTasksByUserId(id).forEach(task -> {
-            Map<String, Object> response = new HashMap<>();
-            response.put("id", task.getId());
-            response.put("title", task.getTitle());
-            response.put("description", task.getDescription());
-            response.put("dueDate", task.getDueDate());
-            listOfTasks.add(response);
-        });
-        return ResponseEntity.ok(listOfTasks);
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<Task>> updateStatus(@PathVariable Long id, @RequestBody String statusUpdate, Authentication authentication) {
+        User currentUser = this.getUserFromAuthentication(authentication);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Task updated ", taskService.updateTaskStatus(id, statusUpdate, currentUser)));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> updateTask(@PathVariable Long id, @Valid @RequestBody TaskDto taskDto) {
-        Task updatedTask = taskService.updateTask(id, taskDto);
-        Map<String, Object> response = new HashMap<>();
-        response.put("id", updatedTask.getId());
-        response.put("title", updatedTask.getTitle());
-        response.put("description", updatedTask.getDescription());
-        response.put("dueDate", updatedTask.getDueDate());
+    @PostMapping
+    public ResponseEntity<ApiResponse<Task>> createTask(@RequestBody Task task, Authentication authentication) {
+        User currentUser = this.getUserFromAuthentication(authentication);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Task created ", taskService.createTask(task, currentUser)));
+    }
 
-        return ResponseEntity.ok(response);
+    @PatchMapping("/{id}/assign")
+    public ResponseEntity<ApiResponse<Task>> assignTask(@PathVariable Long id, @RequestBody String assignUserId, Authentication authentication) {
+        User currentUser = this.getUserFromAuthentication(authentication);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Task assigned ", taskService.assignTask(id, assignUserId, currentUser)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteTask(@PathVariable Long id) {
-        taskService.deleteTask(id);
-        return ResponseEntity.noContent().build();
+    public void deleteTask(@PathVariable Long id, Authentication authentication) {
+        User currentUser = this.getUserFromAuthentication(authentication);
+        taskService.deleteTask(id, currentUser);
     }
 }

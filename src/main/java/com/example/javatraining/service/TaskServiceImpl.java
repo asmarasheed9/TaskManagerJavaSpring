@@ -1,85 +1,120 @@
 package com.example.javatraining.service;
 
 import com.example.javatraining.dto.TaskDto;
+import com.example.javatraining.exception.ValidationExceptionHandler;
 import com.example.javatraining.model.Task;
 import com.example.javatraining.model.User;
 import com.example.javatraining.repository.TaskRepository;
-import com.example.javatraining.repository.UserRepository;
+import com.example.javatraining.service.mapper.TaskMapper;
 import jakarta.transaction.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.nio.file.AccessDeniedException;
 
-@Slf4j
 @Service
 @Transactional
 public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
+    private final TaskMapper taskMapper;
 
-    public TaskServiceImpl(TaskRepository taskRepository, UserRepository userRepository) {
+    public TaskServiceImpl(TaskRepository taskRepository, UserService userService, TaskMapper taskMapper) {
         this.taskRepository = taskRepository;
-        this.userRepository = userRepository;
+        this.userService = userService;
+        this.taskMapper = taskMapper;
     }
 
     @Override
-    public Task createTask(TaskDto taskDto) {
-        User user = userRepository.findById(taskDto.getAssignedUserId())
-                .orElseThrow(() -> new RuntimeException("User not found With Given Id"));
-
-        Task task = new Task();
-        task.setTitle(taskDto.getTitle());
-        task.setDescription(taskDto.getDescription());
-        task.setDueDate(taskDto.getDueDate());
-        task.setAssignedUser(user);
-
-        log.info("Task: " + task.toString());
-        Task savedTask = taskRepository.save(task);
-        log.info("Saved Task: " + savedTask.toString());
-        return savedTask;
-    }
-
-    @Override
-    public List<Task> findAllTasks() {
-        return taskRepository.findAll();
-    }
-
-    @Override
-    public List<Task> getTasksByUserId(Long userId) {
-        return taskRepository.findByAssignedUserId(userId);
-    }
-
-    @Override
-    public Task getTaskById(Long id) {
-        return taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found with ID " + id));
-    }
-
-    @Override
-    public Task updateTask(Long id, TaskDto taskDto) {
-        Task taskToUpdate = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found with ID " + id));
-
-        taskToUpdate.setTitle(taskDto.getTitle());
-        taskToUpdate.setDescription(taskDto.getDescription());
-        taskToUpdate.setStatus(taskDto.getStatus());
-        taskToUpdate.setDueDate(taskDto.getDueDate());
-
-        if (!taskToUpdate.getAssignedUser().getId().equals(taskDto.getAssignedUserId())) {
-            User newUser = userRepository.findById(taskDto.getAssignedUserId())
-                    .orElseThrow(() -> new RuntimeException("User not found with ID " + taskDto.getAssignedUserId()));
-            taskToUpdate.setAssignedUser(newUser);
+    public Page<TaskDto> getTasksForCurrentUser(User currentUser, int page, String sortBy) {
+        if (isAdmin(currentUser)) {
+            Pageable pageable = PageRequest.of(page, 5, Sort.by(sortBy));
+            Page<Task> tasks = taskRepository.findAll(pageable);
+            return tasks.map(taskMapper::toDto);
         }
 
-        return taskRepository.save(taskToUpdate);
+        Pageable pageable = PageRequest.of(page, 5, Sort.by(sortBy));
+        Page<Task> tasks = taskRepository.findByAssignedUserId(currentUser.getId(), pageable);
+        return tasks.map(taskMapper::toDto);
     }
 
     @Override
-    public void deleteTask(Long id) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found with ID " + id));
-        taskRepository.delete(task);
+    public Task getTaskForCurrentUser(Long taskId, User currentUser) {
+        try {
+            Task task = taskRepository.findById(taskId)
+                    .orElseThrow(() -> new ValidationExceptionHandler.ResourceNotFoundException("Task not found"));
+            if (!isAdmin(currentUser) && !task.getAssignedUser().getId().equals(currentUser.getId())) {
+                throw new AccessDeniedException("Access denied");
+            }
+            return task;
+        } catch (AccessDeniedException ex) {
+            System.out.println("Access denied: " + ex.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    @Transactional
+    public Task updateTaskStatus(Long taskId, String newStatus, User currentUser) {
+        try {
+            Task task = getTaskForCurrentUser(taskId, currentUser);
+            task.setStatus(newStatus);
+            return taskRepository.save(task);
+        } catch (Exception ex) {
+            System.out.println("Exception Occur: " + ex.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    @Transactional
+    public Task createTask(Task task, User currentUser) {
+        try {
+            requireAdmin(currentUser);
+            return taskRepository.save(task);
+        } catch (Exception ex) {
+            System.out.println("Exception Occur: " + ex.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public Task assignTask(Long taskId, String userUuiId, User currentUser) {
+        try {
+            requireAdmin(currentUser);
+            Task task = taskRepository.findById(taskId)
+                    .orElseThrow(() -> new ValidationExceptionHandler.ResourceNotFoundException("Task not found"));
+            User assignee = userService.findUserByUuidId(userUuiId);
+            task.setAssignedUser(assignee);
+            return taskRepository.save(task);
+        } catch (Exception ex) {
+            System.out.println("Exception Occur: " + ex.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteTask(Long taskId, User currentUser) {
+        try {
+            this.requireAdmin(currentUser);
+            taskRepository.deleteById(taskId);
+        } catch (Exception ex) {
+            System.out.println("Exception Occur: " + ex.getMessage());
+        }
+    }
+
+    private void requireAdmin(User user) throws AccessDeniedException {
+        if (!isAdmin(user)) {
+            throw new AccessDeniedException("Admin privileges required");
+        }
+    }
+
+
+    private boolean isAdmin(User user) {
+        return user.getRole().getName().equalsIgnoreCase("ADMIN");
     }
 }

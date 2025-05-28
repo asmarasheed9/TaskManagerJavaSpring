@@ -1,9 +1,9 @@
 package com.example.javatraining.model;
-import ch.qos.logback.core.status.Status;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "tasks")
@@ -12,6 +12,11 @@ public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @NotNull
+    // @Schema(description = "Unique identifier of the task.", required = true)
+    @Column(name = "uuid", nullable = false, unique = true)
+    private String uuid = UUID.randomUUID().toString();;
 
     @Column(unique = true, nullable = false)
     private String title;

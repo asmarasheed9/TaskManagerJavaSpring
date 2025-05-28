@@ -1,15 +1,18 @@
-version: "3"
+version: '3.8'
+
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: mysql-container
+  db:
+    container_name: task-manager-db
+    image: postgres:15
     environment:
-      MYSQL_ROOT_PASSWORD: Ts123!!!
-      MYSQL_DATABASE: task_manager
-      MYSQL_USER: root
+      POSTGRES_DB: task_manager_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mysql-data:/var/lib/mysql
+      - pgdata:/var/lib/postgresql/data
+    restart: always
+
 volumes:
-  mysql-data:
+  pgdata:
