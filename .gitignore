@@ -32,6 +32,12 @@ build/
 ### VS Code ###
 .vscode/
 
-src/main/resources/application.properties
+# Ignore production config
+src/main/resources/application-prod.yml
+
+# Optional: ignore any other secret profile configs
+src/main/resources/application-*.yml
+!src/main/resources/application.yml  # explicitly allow dev config
+
 mvnm
 mvnm.cmd
