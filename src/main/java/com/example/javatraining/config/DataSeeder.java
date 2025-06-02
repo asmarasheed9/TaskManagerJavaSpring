@@ -6,6 +6,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.UUID;
+
 @Configuration
 public class DataSeeder {
 
@@ -13,10 +15,10 @@ public class DataSeeder {
     public CommandLineRunner seedRoles(RoleRepository roleRepository) {
         return args -> {
             if (roleRepository.findByName("ADMIN").isEmpty()) {
-                roleRepository.save(new Role("ADMIN"));
+                roleRepository.save(new Role("ADMIN", UUID.randomUUID().toString()));
             }
             if (roleRepository.findByName("USER").isEmpty()) {
-                roleRepository.save(new Role("USER"));
+                roleRepository.save(new Role("USER", UUID.randomUUID().toString()));
             }
         };
     }

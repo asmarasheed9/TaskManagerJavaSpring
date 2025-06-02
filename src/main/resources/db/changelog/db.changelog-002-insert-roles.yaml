@@ -9,9 +9,15 @@ databaseChangeLog:
               - column:
                   name: name
                   value: ADMIN
+              - column:
+                  name: uuid
+                  valueComputed: "gen_random_uuid()"
         - insert:
             tableName: roles
             columns:
               - column:
                   name: name
                   value: USER
+              - column:
+                  name: uuid
+                  valueComputed: "gen_random_uuid()"
